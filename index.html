@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SONIC’S NEXUS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;1,800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sonic-blue: #00eeff;
+            --sonic-gold: #fff200;
+            --bg-dark: #000000;
+            --panel-bg: #0a0a0a;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            margin: 0;
+        }
+        .speed-zone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #001220 0%, #000000 100%);
+        }
+        .speed-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--sonic-blue), transparent);
+            width: 150px;
+            opacity: 0.15;
+            animation: fly linear infinite;
+        }
+        @keyframes fly {
+            0% { transform: translateX(-200px); }
+            100% { transform: translateX(100vw); }
+        }
+        .sonic-glow {
+            text-shadow: 0 0 15px var(--sonic-blue);
+        }
+        .cyan-glow-button {
+            box-shadow: 0 0 20px rgba(0, 238, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+        .cyan-glow-button:hover {
+            box-shadow: 0 0 30px rgba(0, 238, 255, 0.7);
+            transform: translateY(-2px);
+        }
+        .plexus-bg {
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10L90 90M90 10L10 90' stroke='%2300eeff' stroke-opacity='0.1' fill='none'/%3E%3Ccircle cx='10' cy='10' r='1' fill='%2300eeff' fill-opacity='0.2'/%3E%3Ccircle cx='90' cy='90' r='1' fill='%2300eeff' fill-opacity='0.2'/%3E%3C/svg%3E");
+            background-size: 200px 200px;
+        }
+        .input-themed {
+            background: rgba(15, 15, 15, 0.8);
+            border: 1px solid #222;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .input-themed:focus {
+            border-color: var(--sonic-blue);
+            box-shadow: 0 0 10px rgba(0, 238, 255, 0.2);
+            outline: none;
+        }
+        .tab-active {
+            background: linear-gradient(to bottom, #111, #050505);
+            border-bottom: 2px solid var(--sonic-blue);
+        }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div class="speed-zone" id="speed-zone"></div>
+    <div id="root"></div>
+    <script>
+        const zone = document.getElementById('speed-zone');
+        for (let i = 0; i < 30; i++) {
+            const line = document.createElement('div');
+            line.className = 'speed-line';
+            line.style.top = Math.random() * 100 + 'vh';
+            line.style.left = '-200px';
+            line.style.animationDuration = (Math.random() * 0.8 + 0.3) + 's';
+            line.style.animationDelay = Math.random() * 2 + 's';
+            zone.appendChild(line);
+        }
+    </script>
+    <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@0.460.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+  }
+}
+</script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
