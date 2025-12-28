@@ -1,0 +1,265 @@
+import React, { useState, useCallback } from 'react';
+import { 
+  ChevronLeft, 
+  MessageCircle, 
+  ExternalLink, 
+  ChevronDown, 
+  CheckCircle2, 
+  Copy, 
+  Zap, 
+  RotateCcw
+} from 'lucide-react';
+import { GoogleGenAI } from '@google/genai';
+
+interface LinkService {
+  name: string;
+  url: string;
+  desc: string;
+  badge?: string;
+  priority?: boolean;
+}
+
+const services: LinkService[] = [
+  { name: 'is.gd', url: 'https://is.gd', desc: 'Fastest shortener in the hub.', badge: 'TURBO ZONE', priority: true },
+  { name: 'TinyURL', url: 'https://tinyurl.com', desc: 'The classic velocity.' },
+  { name: 'Bitly', url: 'https://bit.ly', desc: 'Professional throughput.' },
+  { name: 'Rebrandly', url: 'https://rebrand.ly', desc: 'Custom identity dash.' },
+  { name: 'Cuttly', url: 'https://cutt.ly', desc: 'The analytics sprint.' },
+  { name: 'click.ly', url: 'https://click.ly', desc: 'Engagement momentum.' },
+];
+
+const App: React.FC = () => {
+  const [selectedService, setSelectedService] = useState<LinkService | null>(null);
+  const [mode, setMode] = useState<'shorten' | 'unshorten'>('shorten');
+  const [urlInput, setUrlInput] = useState('');
+  const [customSlug, setCustomSlug] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [shortenedResult, setShortenedResult] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleServiceClick = useCallback((service: LinkService) => {
+    setSelectedService(service);
+    setUrlInput('');
+    setCustomSlug('');
+    setShortenedResult(null);
+    setIsGenerating(false);
+  }, []);
+
+  const generateShortLink = async () => {
+    if (!urlInput.trim()) return;
+    setIsGenerating(true);
+    setShortenedResult(null);
+
+    try {
+      let finalSlug = customSlug.trim();
+      
+      if (!finalSlug) {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: `Generate a single short, cool URL slug (3-8 characters) related to speed or tech. Return ONLY the lowercase alphanumeric word.`,
+          config: { temperature: 1.0 }
+        });
+        finalSlug = response.text?.trim().toLowerCase().replace(/[^a-z0-9]/g, '') || 'dash' + Math.floor(Math.random() * 1000);
+      }
+
+      setShortenedResult(`nxs.sh/${finalSlug}`);
+    } catch (error) {
+      console.error('Generation Error:', error);
+      setShortenedResult(`nxs.sh/speed-${Math.random().toString(36).substring(7)}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopy = () => {
+    if (shortenedResult) {
+      navigator.clipboard.writeText(shortenedResult);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  if (selectedService) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center pt-8 px-4 pb-12 animate-in overflow-y-auto">
+        {/* Back Button */}
+        <button 
+          onClick={() => setSelectedService(null)}
+          className="bg-zinc-900/50 border border-zinc-800 px-6 py-2.5 rounded-lg text-sm text-zinc-300 hover:text-white transition-all mb-8 flex items-center"
+        >
+          <ChevronLeft size={16} className="mr-1" />
+          <span>Back to Services</span>
+        </button>
+
+        {/* Hero Area */}
+        <div className="w-full max-w-lg plexus-hero py-12 flex flex-col items-center">
+           <h1 className="text-5xl font-bold text-white mb-8 tracking-tight drop-shadow-lg">
+             {selectedService.name}
+           </h1>
+        </div>
+
+        <div className="w-full max-w-lg space-y-4">
+          {/* Toggle Tabs */}
+          <div className="flex flex-col bg-zinc-900/30 rounded-xl border border-zinc-800/50 overflow-hidden">
+            <button 
+              onClick={() => { setMode('shorten'); setShortenedResult(null); }}
+              className={`py-4 font-semibold text-lg transition-all ${mode === 'shorten' ? 'bg-zinc-800/80 text-white' : 'text-zinc-500 hover:text-zinc-400'}`}
+            >
+              Shorten URL
+            </button>
+            <div className="h-[1px] bg-zinc-800/50"></div>
+            <button 
+              onClick={() => { setMode('unshorten'); setShortenedResult(null); }}
+              className={`py-4 font-semibold text-lg transition-all ${mode === 'unshorten' ? 'bg-zinc-800/80 text-white' : 'text-zinc-500 hover:text-zinc-400'}`}
+            >
+              Unshorten URL
+            </button>
+          </div>
+
+          {/* Main Form Container */}
+          <div className="bg-zinc-950/80 border border-zinc-900 rounded-3xl p-6 pt-8 space-y-6 shadow-2xl backdrop-blur-sm">
+            {!shortenedResult ? (
+              <>
+                {/* Select Type */}
+                <div>
+                  <label className="block text-sm font-bold text-white mb-3">Select Link Type</label>
+                  <div className="relative">
+                    <select className="w-full input-themed rounded-xl px-4 py-4 text-white appearance-none cursor-pointer">
+                      <option>Private Server</option>
+                      <option>Public Link</option>
+                      <option>Alias Link</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={18} />
+                  </div>
+                </div>
+
+                {/* Discord Button */}
+                <button className="w-full cyan-glow-button font-bold py-4 rounded-xl flex items-center justify-center space-x-2 transition-all">
+                  <MessageCircle size={20} />
+                  <span>Join Discord Community</span>
+                </button>
+
+                {/* URL Input */}
+                <div>
+                  <label className="block text-sm font-bold text-white mb-3">Enter Your Link</label>
+                  <input 
+                    type="url" 
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    placeholder="https://www.roblox.com/users/123/profile"
+                    className="w-full input-themed rounded-xl px-4 py-4 text-zinc-300 placeholder-zinc-700"
+                  />
+                </div>
+
+                {/* Slug Input */}
+                {mode === 'shorten' && (
+                  <div>
+                    <label className="block text-sm font-bold text-white mb-3">Custom Slug (Optional)</label>
+                    <input 
+                      type="text" 
+                      value={customSlug}
+                      onChange={(e) => setCustomSlug(e.target.value)}
+                      placeholder="your-custom-slug"
+                      className="w-full input-themed rounded-xl px-4 py-4 text-zinc-300 placeholder-zinc-700"
+                    />
+                  </div>
+                )}
+
+                {/* Generate Button */}
+                <button 
+                  onClick={generateShortLink}
+                  disabled={isGenerating || !urlInput}
+                  className={`w-full cyan-glow-button font-bold py-5 rounded-xl text-lg mt-2 ${(!urlInput || isGenerating) ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                >
+                  {isGenerating ? 'Generating...' : mode === 'shorten' ? 'Generate Shortened Link' : 'Unshorten Link'}
+                </button>
+              </>
+            ) : (
+              <div className="space-y-6 py-4 text-center animate-in">
+                <div className="w-20 h-20 rounded-full bg-[#00eeff]/10 flex items-center justify-center mx-auto border-2 border-[#00eeff]/50">
+                  <CheckCircle2 size={40} className="text-[#00eeff]" />
+                </div>
+                <h3 className="text-2xl font-bold text-white uppercase tracking-tight">Success!</h3>
+                <div className="bg-black/50 border border-zinc-800 rounded-xl p-6">
+                  <span className="text-2xl font-bold text-[#00eeff] block mb-4 select-all">{shortenedResult}</span>
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={handleCopy}
+                      className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl flex items-center justify-center space-x-2"
+                    >
+                      {copied ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                      <span>{copied ? 'Copied' : 'Copy'}</span>
+                    </button>
+                    <button 
+                      onClick={() => window.open(urlInput, '_blank')}
+                      className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl flex items-center justify-center"
+                    >
+                      <ExternalLink size={16} className="mr-2"/>
+                      Test
+                    </button>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShortenedResult(null)}
+                  className="text-zinc-500 hover:text-white text-sm font-bold flex items-center justify-center mx-auto"
+                >
+                  <RotateCcw size={14} className="mr-2" />
+                  New Link
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 animate-in">
+      <header className="text-center mb-16">
+        <h1 className="text-7xl font-black italic tracking-tighter text-[#00eeff] mb-4 drop-shadow-2xl">
+          NEXUS HUB
+        </h1>
+        <p className="text-[#00eeff] font-bold tracking-[0.5em] text-xs uppercase opacity-80">
+          Hyperlink Speed Zone
+        </p>
+      </header>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl w-full">
+        {services.map((service, idx) => (
+          <div
+            key={idx}
+            onClick={() => handleServiceClick(service)}
+            className={`cursor-pointer group relative bg-zinc-900/40 backdrop-blur-xl p-8 rounded-3xl border transition-all duration-300 hover:scale-[1.03] flex flex-col justify-between h-56 border-zinc-800/50 hover:border-[#00eeff]/50 ${service.priority ? 'shadow-[0_0_20px_rgba(0,238,255,0.1)]' : ''}`}
+          >
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <span className="text-3xl font-black text-white italic tracking-tighter">{service.name}</span>
+                {service.badge && (
+                  <span className="bg-[#00eeff] text-black text-[10px] font-bold px-2 py-1 rounded italic">{service.badge}</span>
+                )}
+              </div>
+              <p className="text-zinc-500 text-sm font-medium leading-relaxed group-hover:text-zinc-300 transition-colors">
+                {service.desc}
+              </p>
+            </div>
+            <div className="flex items-center text-xs font-bold tracking-widest text-[#00eeff] uppercase opacity-0 group-hover:opacity-100 transition-all">
+              <Zap size={14} className="mr-2" /> Enter Zone
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <footer className="mt-20 text-zinc-700 text-[10px] tracking-[0.5em] uppercase font-bold flex flex-col items-center">
+        <div className="flex items-center space-x-2">
+          <span>Nexus Collective</span>
+          <span className="text-[#00eeff]">●</span>
+          <span>© {new Date().getFullYear()}</span>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
